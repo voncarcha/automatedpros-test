@@ -49,9 +49,6 @@ export const useSearch = (defaultQuery: string = "", debounceMs: number = 300) =
       params.delete('q');
     }
     
-    // Reset offset when search changes
-    params.delete('offset');
-    
     router.push(`?${params.toString()}`, { scroll: false });
   }, [router, searchParams]);
 

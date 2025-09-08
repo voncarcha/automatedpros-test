@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { DataTable } from "./DataTable";
 import { pokemonColumns } from "./columns";
 import {
@@ -25,25 +25,26 @@ const PokemonList = () => {
   );
   const { query, debouncedQuery, setQuery, clearSearch, hasQuery } = useSearch();
 
-  // Reset pagination when search query changes
+  // Reset pagination when search query changes (but not when just toggling search state)
+  const prevDebouncedQuery = useRef(debouncedQuery);
   useEffect(() => {
-    if (hasQuery && offset !== 0) {
+    // Only reset if the actual search query changed, not just the hasQuery state
+    if (debouncedQuery !== prevDebouncedQuery.current) {
       resetPagination();
+      prevDebouncedQuery.current = debouncedQuery;
     }
-  }, [hasQuery, offset, resetPagination]);
+  }, [debouncedQuery, resetPagination]);
 
   const {
     data: searchData,
     isLoading: searchLoading,
     error: searchError,
-    isFetching: searchFetching,
-  } = usePokemonSearch(debouncedQuery, hasQuery ? 0 : offset, limit);
+  } = usePokemonSearch(debouncedQuery, offset, limit);
 
   const {
     data: regularData,
     isLoading: regularLoading,
     error: regularError,
-    isFetching: regularFetching,
   } = usePokemonListWithDetails(offset, limit, { enabled: !hasQuery });
 
   // Use search data when there's a query, otherwise use regular data
@@ -51,7 +52,6 @@ const PokemonList = () => {
   const totalResults = hasQuery ? searchData?.total || 0 : regularData?.total || 0;
   const isLoading = hasQuery ? searchLoading : regularLoading;
   const error = hasQuery ? searchError : regularError;
-  const isFetching = hasQuery ? searchFetching : regularFetching;
 
   const handlePrevious = () => {
     previousPage(limit);
@@ -122,16 +122,16 @@ const PokemonList = () => {
           )}
 
           <Pagination
-            currentPage={hasQuery ? 0 : currentPage}
+            currentPage={currentPage}
             totalPages={totalPages}
             totalResults={totalResults}
-            offset={hasQuery ? 0 : offset}
+            offset={offset}
             itemsPerPage={limit}
             currentItemsCount={pokemonData?.length || 0}
             onPrevious={handlePrevious}
             onNext={handleNext}
             onGoToPage={goToPage}
-            isLoading={isFetching}
+            isLoading={isLoading}
             hasQuery={hasQuery}
           />
         </>
