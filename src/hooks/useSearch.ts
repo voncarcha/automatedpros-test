@@ -7,7 +7,10 @@ import { useRouter, useSearchParams } from "next/navigation";
  * @param debounceMs - Debounce delay in milliseconds (defaults to 300ms)
  * @returns Object containing search query and functions to update it
  */
-export const useSearch = (defaultQuery: string = "", debounceMs: number = 300) => {
+export const useSearch = (
+  defaultQuery: string = "",
+  debounceMs: number = 300
+) => {
   const [query, setQuery] = useState(defaultQuery);
   const [debouncedQuery, setDebouncedQuery] = useState(defaultQuery);
   const [isSearching, setIsSearching] = useState(false);
@@ -16,7 +19,7 @@ export const useSearch = (defaultQuery: string = "", debounceMs: number = 300) =
 
   // Sync query with URL params on component mount or when searchParams change
   useEffect(() => {
-    const urlQuery = searchParams.get('q') || "";
+    const urlQuery = searchParams.get("q") || "";
     setQuery(urlQuery);
     setDebouncedQuery(urlQuery);
   }, [searchParams]);
@@ -40,31 +43,42 @@ export const useSearch = (defaultQuery: string = "", debounceMs: number = 300) =
   }, [query, debouncedQuery, debounceMs]);
 
   // Helper function to update URL with new query
-  const updateUrlWithQuery = useCallback((newQuery: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    
-    if (newQuery.trim()) {
-      params.set('q', newQuery);
-    } else {
-      params.delete('q');
-    }
-    
-    router.push(`?${params.toString()}`, { scroll: false });
-  }, [router, searchParams]);
+  const updateUrlWithQuery = useCallback(
+    (newQuery: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+
+      if (newQuery.trim()) {
+        params.set("q", newQuery);
+      } else {
+        params.delete("q");
+      }
+
+      router.push(`?${params.toString()}`, { scroll: false });
+    },
+    [router, searchParams]
+  );
 
   // Function to set query and update URL (immediately updates URL, debounces the search)
-  const setQueryWithUrl = useCallback((newQuery: string) => {
-    setQuery(newQuery);
-    updateUrlWithQuery(newQuery);
-  }, [updateUrlWithQuery]);
+  const setQueryWithUrl = useCallback(
+    (newQuery: string) => {
+      setQuery(newQuery);
+      updateUrlWithQuery(newQuery);
+    },
+    [updateUrlWithQuery]
+  );
+
+  // Helper function to clear all URL parameters
+  const clearAllParams = useCallback(() => {
+    router.push("/", { scroll: false });
+  }, [router]);
 
   // Function to clear search
-  const clearSearch = useCallback(() => {
+  const clearSearch = () => {
     setQuery("");
-    setDebouncedQuery("");
+    // setDebouncedQuery("");
+    clearAllParams()
     setIsSearching(false);
-    updateUrlWithQuery("");
-  }, [updateUrlWithQuery]);
+  };
 
   return {
     query,
