@@ -3,28 +3,49 @@
 import { DataTable } from "./DataTable";
 import { pokemonColumns } from "./columns";
 import { usePokemonListWithDetails } from "@/hooks/usePokemon";
-import { useState } from "react";
+import { useOffsetParam } from "@/hooks/useOffsetParam";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { Pokemon } from "@/lib/pokemon-api";
 
 const List = () => {
-  const [offset, setOffset] = useState(0);
   const limit = 20;
   const router = useRouter();
+  const { offset, nextPage, previousPage, goToPage, currentPage } = useOffsetParam(0, limit);
   
   const { data: pokemonData, isLoading, error, isFetching } = usePokemonListWithDetails(offset, limit);
 
   const handlePrevious = () => {
-    setOffset(Math.max(0, offset - limit));
+    previousPage(limit);
   };
 
   const handleNext = () => {
-    setOffset(offset + limit);
+    nextPage(limit);
   };
 
   const handleRowClick = (pokemon: Pokemon) => {
     router.push(`/items/${pokemon.id}`);
+  };
+
+  // Helper function to calculate visible page numbers
+  const getVisiblePages = (currentPage: number, totalPages: number, maxVisible: number = 5) => {
+    const halfVisible = Math.floor(maxVisible / 2);
+    
+    // Calculate start and end page numbers
+    let startPage = Math.max(0, currentPage - halfVisible);
+    const endPage = Math.min(totalPages - 1, startPage + maxVisible - 1);
+    
+    // Adjust start page if we're near the end
+    if (endPage - startPage + 1 < maxVisible) {
+      startPage = Math.max(0, endPage - maxVisible + 1);
+    }
+    
+    const pages = [];
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    
+    return pages;
   };
 
   if (error) {
@@ -54,18 +75,46 @@ const List = () => {
               {isFetching && <span className="ml-2">(Loading...)</span>}
             </div>
             
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
               <Button 
                 onClick={handlePrevious} 
                 disabled={offset === 0 || isFetching}
                 variant="outline"
+                size="sm"
               >
                 Previous
               </Button>
+              
+              {/* Page Number Buttons */}
+              <div className="flex gap-1">
+                {getVisiblePages(currentPage, 50).map((pageIndex) => {
+                  const pageNumber = pageIndex + 1;
+                  const isCurrentPage = currentPage === pageIndex;
+                  
+                  return (
+                    <Button
+                      key={pageNumber}
+                      onClick={() => goToPage(pageIndex, limit)}
+                      disabled={isFetching}
+                      variant={isCurrentPage ? "default" : "outline"}
+                      size="sm"
+                      className={`w-10 h-10 p-0 ${
+                        isCurrentPage 
+                          ? "bg-blue-600 hover:bg-blue-700 text-white" 
+                          : "hover:bg-gray-50"
+                      }`}
+                    >
+                      {pageNumber}
+                    </Button>
+                  );
+                })}
+              </div>
+              
               <Button 
                 onClick={handleNext} 
                 disabled={isFetching}
                 variant="outline"
+                size="sm"
               >
                 Next
               </Button>
