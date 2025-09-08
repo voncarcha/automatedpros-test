@@ -4,6 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import Image from "next/image";
 import { Pokemon } from "@/lib/pokemon-api";
 import { Badge } from "../ui/badge";
+import { useRouter } from "next/navigation";
 
 export const pokemonColumns: ColumnDef<Pokemon>[] = [
   {

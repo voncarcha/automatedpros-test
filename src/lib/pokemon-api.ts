@@ -18,6 +18,17 @@ export interface Pokemon {
   }>;
   height?: number;
   weight?: number;
+  abilities?: Array<{
+    ability: {
+      name: string;
+    };
+  }>;
+  stats?: Array<{
+    base_stat: number;
+    stat: {
+      name: string;
+    };
+  }>;
 }
 
 export interface PokemonListResponse {

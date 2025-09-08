@@ -5,10 +5,13 @@ import { pokemonColumns } from "./columns";
 import { usePokemonListWithDetails } from "@/hooks/usePokemon";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+import { Pokemon } from "@/lib/pokemon-api";
 
 const List = () => {
   const [offset, setOffset] = useState(0);
   const limit = 20;
+  const router = useRouter();
   
   const { data: pokemonData, isLoading, error, isFetching } = usePokemonListWithDetails(offset, limit);
 
@@ -18,6 +21,10 @@ const List = () => {
 
   const handleNext = () => {
     setOffset(offset + limit);
+  };
+
+  const handleRowClick = (pokemon: Pokemon) => {
+    router.push(`/items/${pokemon.id}`);
   };
 
   if (error) {
@@ -38,7 +45,7 @@ const List = () => {
         </div>
       ) : (
         <>
-          <DataTable columns={pokemonColumns} data={pokemonData || []} />
+          <DataTable columns={pokemonColumns} data={pokemonData || []} onRowClick={handleRowClick} />
           
           {/* Pagination Controls */}
           <div className="flex items-center justify-between mt-6">
