@@ -3,6 +3,7 @@ import {
   fetchPokemonList,
   fetchPokemonDetail,
   fetchPokemonListWithDetails,
+  searchPokemonByName,
 } from "@/lib/pokemon-api";
 
 const STALE_TIME = 5 * 60 * 1000;
@@ -19,12 +20,14 @@ export const usePokemonList = (offset: number = 0, limit: number = 20) => {
 // Hook for fetching Pokemon list with details (images, types, etc.)
 export const usePokemonListWithDetails = (
   offset: number = 0,
-  limit: number = 20
+  limit: number = 20,
+  options?: { enabled?: boolean }
 ) => {
   return useQuery({
     queryKey: ["pokemon-list-details", offset, limit],
     queryFn: () => fetchPokemonListWithDetails(offset, limit),
     staleTime: STALE_TIME,
+    enabled: options?.enabled ?? true,
   });
 };
 
@@ -49,6 +52,20 @@ export const useInfinitePokemonList = (limit: number = 20) => {
       return nextOffset < 1000 ? nextOffset : undefined; // Limit to first 1000 Pokemon
     },
     initialPageParam: 0,
+    staleTime: STALE_TIME,
+  });
+};
+
+// Hook for searching Pokemon with pagination
+export const usePokemonSearch = (
+  query: string,
+  offset: number = 0,
+  limit: number = 20
+) => {
+  return useQuery({
+    queryKey: ["pokemon-search", query, offset, limit],
+    queryFn: () => searchPokemonByName(query, offset, limit),
+    enabled: !!query.trim(), // Only enabled when there's an actual search query
     staleTime: STALE_TIME,
   });
 };

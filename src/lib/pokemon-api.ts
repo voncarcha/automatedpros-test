@@ -105,3 +105,60 @@ export const fetchPokemonListWithDetails = async (
   
   return Promise.all(pokemonPromises);
 };
+
+// Fetch all Pokemon names for client-side filtering (first 1000)
+export const fetchAllPokemonNames = async (): Promise<Array<{name: string, url: string}>> => {
+  const response = await fetch(`${BASE_URL}/pokemon?limit=1000`);
+  
+  if (!response.ok) {
+    throw new Error('Failed to fetch Pokemon names');
+  }
+  
+  const data: PokemonListResponse = await response.json();
+  return data.results;
+};
+
+// Search Pokemon with client-side filtering
+export const searchPokemonByName = async (
+  query: string,
+  offset: number = 0,
+  limit: number = 20
+): Promise<{results: Pokemon[], total: number}> => {
+  if (!query.trim()) {
+    // If no query, return regular paginated list
+    const results = await fetchPokemonListWithDetails(offset, limit);
+    return { results, total: 1000 }; // Approximate total
+  }
+  
+  // Fetch all Pokemon names for filtering
+  const allPokemon = await fetchAllPokemonNames();
+  
+  // Filter by name (case-insensitive)
+  const filteredPokemon = allPokemon.filter(pokemon => 
+    pokemon.name.toLowerCase().includes(query.toLowerCase())
+  );
+  
+  // Paginate filtered results
+  const paginatedNames = filteredPokemon.slice(offset, offset + limit);
+
+  // Fetch detailed info for paginated results
+  const pokemonPromises = paginatedNames.map(async (pokemon) => {
+    const detail = await fetchPokemonDetail(pokemon.name);
+    return {
+      id: detail.id,
+      name: detail.name,
+      url: pokemon.url,
+      sprites: detail.sprites,
+      types: detail.types,
+      height: detail.height,
+      weight: detail.weight,
+    };
+  });
+  
+  const results = await Promise.all(pokemonPromises);
+  
+  return {
+    results,
+    total: filteredPokemon.length
+  };
+};
