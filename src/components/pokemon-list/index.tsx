@@ -47,8 +47,8 @@ const PokemonList = () => {
   } = usePokemonListWithDetails(offset, limit, { enabled: !hasQuery });
 
   // Use search data when there's a query, otherwise use regular data
-  const pokemonData = hasQuery ? searchData?.results : regularData;
-  const totalResults = hasQuery ? searchData?.total || 0 : 1000;
+  const pokemonData = hasQuery ? searchData?.results : regularData?.results;
+  const totalResults = hasQuery ? searchData?.total || 0 : regularData?.total || 0;
   const isLoading = hasQuery ? searchLoading : regularLoading;
   const error = hasQuery ? searchError : regularError;
   const isFetching = hasQuery ? searchFetching : regularFetching;
@@ -81,6 +81,15 @@ const PokemonList = () => {
 
   return (
     <section className="p-6">
+      {/* <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Pokemon Directory</h1>
+        {totalResults > 0 && (
+          <p className="text-lg text-gray-600">
+            Discover all {totalResults.toLocaleString()} Pokemon from the official Pokedex
+          </p>
+        )}
+      </div> */}
+      
       <div className="flex gap-2">
         <Search
           query={query}

@@ -86,7 +86,7 @@ export const fetchPokemonDetail = async (nameOrId: string | number): Promise<Pok
 export const fetchPokemonListWithDetails = async (
   offset: number = 0,
   limit: number = 20
-): Promise<Pokemon[]> => {
+): Promise<{results: Pokemon[], total: number}> => {
   const listResponse = await fetchPokemonList(offset, limit);
   
   // Fetch detailed info for each Pokemon to get images and types
@@ -103,7 +103,12 @@ export const fetchPokemonListWithDetails = async (
     };
   });
   
-  return Promise.all(pokemonPromises);
+  const results = await Promise.all(pokemonPromises);
+  
+  return {
+    results,
+    total: listResponse.count
+  };
 };
 
 // Fetch all Pokemon names for client-side filtering (first 1000)
@@ -126,8 +131,8 @@ export const searchPokemonByName = async (
 ): Promise<{results: Pokemon[], total: number}> => {
   if (!query.trim()) {
     // If no query, return regular paginated list
-    const results = await fetchPokemonListWithDetails(offset, limit);
-    return { results, total: 1000 }; // Approximate total
+    const data = await fetchPokemonListWithDetails(offset, limit);
+    return data; // Return the same structure with actual total
   }
   
   // Fetch all Pokemon names for filtering

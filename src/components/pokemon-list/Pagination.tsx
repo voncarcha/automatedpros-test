@@ -62,7 +62,7 @@ export const Pagination = ({
   return (
     <div className={`flex items-center justify-between mt-6 ${className}`}>
       <div className="text-sm text-gray-600">
-        Showing {offset + 1} to {offset + currentItemsCount} of {totalResults} Pokemon
+        Showing {offset + 1} to {offset + currentItemsCount} of {totalResults.toLocaleString()} Pokemon
         {hasQuery && <span className="ml-2">(filtered)</span>}
         {isLoading && <span className="ml-2">(Loading...)</span>}
       </div>
@@ -72,7 +72,6 @@ export const Pagination = ({
           onClick={onPrevious} 
           disabled={offset === 0 || isLoading}
           variant="outline"
-          size="sm"
         >
           Previous
         </Button>
@@ -106,7 +105,6 @@ export const Pagination = ({
           onClick={onNext} 
           disabled={isLoading}
           variant="outline"
-          size="sm"
         >
           Next
         </Button>
