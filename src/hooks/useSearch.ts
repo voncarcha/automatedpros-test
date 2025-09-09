@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useDebounce } from "./useDebounce";
 
 /**
  * Custom hook to manage search query in URL parameters with debouncing
@@ -12,35 +13,20 @@ export const useSearch = (
   debounceMs: number = 300
 ) => {
   const [query, setQuery] = useState(defaultQuery);
-  const [debouncedQuery, setDebouncedQuery] = useState(defaultQuery);
-  const [isSearching, setIsSearching] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  // Use the debounce hook
+  const { debouncedValue: debouncedQuery, isSearching } = useDebounce(
+    query,
+    debounceMs
+  );
 
   // Sync query with URL params on component mount or when searchParams change
   useEffect(() => {
     const urlQuery = searchParams.get("q") || "";
     setQuery(urlQuery);
-    setDebouncedQuery(urlQuery);
   }, [searchParams]);
-
-  // Debounce the query
-  useEffect(() => {
-    if (query === debouncedQuery) {
-      setIsSearching(false);
-      return;
-    }
-
-    setIsSearching(true);
-    const handler = setTimeout(() => {
-      setDebouncedQuery(query);
-      setIsSearching(false);
-    }, debounceMs);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [query, debouncedQuery, debounceMs]);
 
   // Helper function to update URL with new query
   const updateUrlWithQuery = useCallback(
@@ -75,9 +61,7 @@ export const useSearch = (
   // Function to clear search
   const clearSearch = () => {
     setQuery("");
-    // setDebouncedQuery("");
-    clearAllParams()
-    setIsSearching(false);
+    clearAllParams();
   };
 
   return {
