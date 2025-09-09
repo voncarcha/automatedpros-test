@@ -84,7 +84,6 @@ export const pokemonColumns: ColumnDef<Pokemon>[] = [
   {
     accessorKey: "types",
     header: "Types",
-    enableSorting: true,
     cell: ({ row }) => {
       const types = row.getValue("types") as Pokemon["types"];
 
@@ -102,7 +101,6 @@ export const pokemonColumns: ColumnDef<Pokemon>[] = [
   {
     accessorKey: "height",
     header: "Height",
-    enableSorting: true,
     cell: ({ row }) => {
       const height = row.getValue("height") as number;
       return height ? `${height / 10} m` : "-";
@@ -111,7 +109,6 @@ export const pokemonColumns: ColumnDef<Pokemon>[] = [
   {
     accessorKey: "weight",
     header: "Weight",
-    enableSorting: true,
     cell: ({ row }) => {
       const weight = row.getValue("weight") as number;
       return weight ? `${weight / 10} kg` : "-";
