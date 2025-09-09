@@ -123,36 +123,103 @@ export const fetchAllPokemonNames = async (): Promise<Array<{name: string, url: 
   return data.results;
 };
 
-// Search Pokemon with client-side filtering
-export const searchPokemonByName = async (
-  query: string,
+// Pokemon Type interface
+export interface PokemonType {
+  name: string;
+  url: string;
+}
+
+export interface PokemonTypeResponse {
+  count: number;
+  results: PokemonType[];
+}
+
+export interface PokemonTypeDetail {
+  name: string;
+  pokemon: Array<{
+    pokemon: {
+      name: string;
+      url: string;
+    };
+  }>;
+}
+
+// Fetch all Pokemon types
+export const fetchPokemonTypes = async (): Promise<PokemonType[]> => {
+  const response = await fetch(`${BASE_URL}/type`);
+  
+  if (!response.ok) {
+    throw new Error('Failed to fetch Pokemon types');
+  }
+  
+  const data: PokemonTypeResponse = await response.json();
+  return data.results;
+};
+
+// Fetch Pokemon by type
+export const fetchPokemonByType = async (typeName: string): Promise<string[]> => {
+  const response = await fetch(`${BASE_URL}/type/${typeName}`);
+  
+  if (!response.ok) {
+    throw new Error(`Failed to fetch Pokemon of type: ${typeName}`);
+  }
+  
+  const data: PokemonTypeDetail = await response.json();
+  return data.pokemon.map(p => p.pokemon.name);
+};
+
+// Search Pokemon with client-side filtering by name and types
+export const searchPokemonByNameAndTypes = async (
+  query: string = "",
+  selectedTypes: string[] = [],
   offset: number = 0,
   limit: number = 20
 ): Promise<{results: Pokemon[], total: number}> => {
-  if (!query.trim()) {
-    // If no query, return regular paginated list
+  // If no query and no types selected, return regular paginated list
+  if (!query.trim() && selectedTypes.length === 0) {
     const data = await fetchPokemonListWithDetails(offset, limit);
-    return data; // Return the same structure with actual total
+    return data;
   }
   
-  // Fetch all Pokemon names for filtering
-  const allPokemon = await fetchAllPokemonNames();
+  let filteredPokemonNames: string[] = [];
   
-  // Filter by name (case-insensitive)
-  const filteredPokemon = allPokemon.filter(pokemon => 
-    pokemon.name.toLowerCase().includes(query.toLowerCase())
-  );
+  if (selectedTypes.length > 0) {
+    // Fetch Pokemon for each selected type
+    const typePromises = selectedTypes.map(type => fetchPokemonByType(type));
+    const typePokemonArrays = await Promise.all(typePromises);
+    
+    // Find intersection of Pokemon that have ALL selected types
+    if (typePokemonArrays.length === 1) {
+      filteredPokemonNames = typePokemonArrays[0];
+    } else {
+      // Find Pokemon that appear in all type arrays (intersection)
+      filteredPokemonNames = typePokemonArrays.reduce((acc, curr) => 
+        acc.filter(pokemon => curr.includes(pokemon))
+      );
+    }
+  } else {
+    // If no types selected, get all Pokemon names
+    const allPokemon = await fetchAllPokemonNames();
+    filteredPokemonNames = allPokemon.map(p => p.name);
+  }
+  
+  // Filter by name if query provided
+  if (query.trim()) {
+    filteredPokemonNames = filteredPokemonNames.filter(name => 
+      name.toLowerCase().includes(query.toLowerCase())
+    );
+  }
   
   // Paginate filtered results
-  const paginatedNames = filteredPokemon.slice(offset, offset + limit);
+  const paginatedNames = filteredPokemonNames.slice(offset, offset + limit);
 
   // Fetch detailed info for paginated results
-  const pokemonPromises = paginatedNames.map(async (pokemon) => {
-    const detail = await fetchPokemonDetail(pokemon.name);
+  const pokemonPromises = paginatedNames.map(async (name) => {
+    const detail = await fetchPokemonDetail(name);
     return {
       id: detail.id,
       name: detail.name,
-      url: pokemon.url,
+      url: `${BASE_URL}/pokemon/${detail.id}/`,
       sprites: detail.sprites,
       types: detail.types,
       height: detail.height,
@@ -164,6 +231,15 @@ export const searchPokemonByName = async (
   
   return {
     results,
-    total: filteredPokemon.length
+    total: filteredPokemonNames.length
   };
+};
+
+// Keep the old function for backward compatibility
+export const searchPokemonByName = async (
+  query: string,
+  offset: number = 0,
+  limit: number = 20
+): Promise<{results: Pokemon[], total: number}> => {
+  return searchPokemonByNameAndTypes(query, [], offset, limit);
 };

@@ -4,6 +4,8 @@ import {
   fetchPokemonDetail,
   fetchPokemonListWithDetails,
   searchPokemonByName,
+  searchPokemonByNameAndTypes,
+  fetchPokemonTypes,
 } from "@/lib/pokemon-api";
 
 const STALE_TIME = 5 * 60 * 1000;
@@ -67,5 +69,29 @@ export const usePokemonSearch = (
     queryFn: () => searchPokemonByName(query, offset, limit),
     enabled: !!query.trim(), // Only enabled when there's an actual search query
     staleTime: STALE_TIME,
+  });
+};
+
+// Hook for searching Pokemon with name and type filtering
+export const usePokemonSearchWithTypes = (
+  query: string = "",
+  selectedTypes: string[] = [],
+  offset: number = 0,
+  limit: number = 20
+) => {
+  return useQuery({
+    queryKey: ["pokemon-search-types", query, selectedTypes, offset, limit],
+    queryFn: () => searchPokemonByNameAndTypes(query, selectedTypes, offset, limit),
+    enabled: !!query.trim() || selectedTypes.length > 0, // Enabled when there's a query or types selected
+    staleTime: STALE_TIME,
+  });
+};
+
+// Hook for fetching all Pokemon types
+export const usePokemonTypes = () => {
+  return useQuery({
+    queryKey: ["pokemon-types"],
+    queryFn: fetchPokemonTypes,
+    staleTime: 30 * 60 * 1000, // Cache for 30 minutes since types rarely change
   });
 };

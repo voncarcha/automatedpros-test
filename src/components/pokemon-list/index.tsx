@@ -5,10 +5,11 @@ import { DataTable } from "./DataTable";
 import { pokemonColumns } from "./columns";
 import {
   usePokemonListWithDetails,
-  usePokemonSearch,
+  usePokemonSearchWithTypes,
 } from "@/hooks/usePokemon";
 import { usePaginate } from "@/hooks/usePaginate";
 import { useSearch } from "@/hooks/useSearch";
+import { useTypeFilter } from "@/hooks/useTypeFilter";
 import { useRouter } from "next/navigation";
 import { Pokemon } from "@/lib/pokemon-api";
 import { Search } from "./Search";
@@ -19,39 +20,57 @@ import Filter from "./Filter";
 const PokemonList = () => {
   const limit = 20;
   const router = useRouter();
-  const { offset, nextPage, previousPage, goToPage, currentPage, resetPagination } = usePaginate(
-    0,
-    limit
-  );
-  const { query, debouncedQuery, setQuery, clearSearch, hasQuery } = useSearch();
+  const {
+    offset,
+    nextPage,
+    previousPage,
+    goToPage,
+    currentPage,
+    resetPagination,
+  } = usePaginate(0, limit);
+  const { query, debouncedQuery, setQuery, clearSearch, hasQuery } =
+    useSearch();
+  const { selectedTypes, hasTypesSelected, clearTypes } = useTypeFilter();
 
-  // Reset pagination when search query changes (but not when just toggling search state)
+  // Reset pagination when search query or types change
   const prevDebouncedQuery = useRef(debouncedQuery);
+  const prevSelectedTypes = useRef(selectedTypes);
+
   useEffect(() => {
-    // Only reset if the actual search query changed, not just the hasQuery state
-    if (debouncedQuery !== prevDebouncedQuery.current) {
+    // Reset if search query or types changed
+    if (
+      debouncedQuery !== prevDebouncedQuery.current ||
+      JSON.stringify(selectedTypes) !==
+        JSON.stringify(prevSelectedTypes.current)
+    ) {
       resetPagination();
       prevDebouncedQuery.current = debouncedQuery;
+      prevSelectedTypes.current = selectedTypes;
     }
-  }, [debouncedQuery, resetPagination]);
+  }, [debouncedQuery, selectedTypes, resetPagination]);
+
+  // Determine if we should use filtering (either query or types selected)
+  const hasFilters = hasQuery || hasTypesSelected;
 
   const {
-    data: searchData,
-    isLoading: searchLoading,
-    error: searchError,
-  } = usePokemonSearch(debouncedQuery, offset, limit);
+    data: filteredData,
+    isLoading: filteredLoading,
+    error: filteredError,
+  } = usePokemonSearchWithTypes(debouncedQuery, selectedTypes, offset, limit);
 
   const {
     data: regularData,
     isLoading: regularLoading,
     error: regularError,
-  } = usePokemonListWithDetails(offset, limit, { enabled: !hasQuery });
+  } = usePokemonListWithDetails(offset, limit, { enabled: !hasFilters });
 
-  // Use search data when there's a query, otherwise use regular data
-  const pokemonData = hasQuery ? searchData?.results : regularData?.results;
-  const totalResults = hasQuery ? searchData?.total || 0 : regularData?.total || 0;
-  const isLoading = hasQuery ? searchLoading : regularLoading;
-  const error = hasQuery ? searchError : regularError;
+  // Use filtered data when there are filters, otherwise use regular data
+  const pokemonData = hasFilters ? filteredData?.results : regularData?.results;
+  const totalResults = hasFilters
+    ? filteredData?.total || 0
+    : regularData?.total || 0;
+  const isLoading = hasFilters ? filteredLoading : regularLoading;
+  const error = hasFilters ? filteredError : regularError;
 
   const handlePrevious = () => {
     previousPage(limit);
@@ -63,6 +82,11 @@ const PokemonList = () => {
 
   const handleRowClick = (pokemon: Pokemon) => {
     router.push(`/items/${pokemon.id}`);
+  };
+
+  const handleClearAllFilters = () => {
+    clearTypes();
+    clearSearch();
   };
 
   // Calculate total pages based on current results
@@ -81,16 +105,7 @@ const PokemonList = () => {
 
   return (
     <section className="p-6">
-      {/* <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Pokemon Directory</h1>
-        {totalResults > 0 && (
-          <p className="text-lg text-gray-600">
-            Discover all {totalResults.toLocaleString()} Pokemon from the official Pokedex
-          </p>
-        )}
-      </div> */}
-      
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
         <Search
           query={query}
           onQueryChange={setQuery}
@@ -105,14 +120,23 @@ const PokemonList = () => {
         <div className="flex items-center justify-center p-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           <span className="ml-2 text-gray-600">
-            {hasQuery ? "Searching Pokemon..." : "Loading Pokemon..."}
+            {hasFilters ? "Filtering Pokemon..." : "Loading Pokemon..."}
           </span>
         </div>
       ) : (
         <>
-          {/* Show empty state for search with no results */}
-          {hasQuery && (!pokemonData || pokemonData.length === 0) ? (
-            <EmptyState query={query} onClearSearch={clearSearch} />
+          {/* Show empty state for filters with no results */}
+          {hasFilters && (!pokemonData || pokemonData.length === 0) ? (
+            <EmptyState
+              query={
+                hasQuery
+                  ? query
+                  : `${selectedTypes.join(", ")} type${
+                      selectedTypes.length > 1 ? "s" : ""
+                    }`
+              }
+              onClearSearch={handleClearAllFilters}
+            />
           ) : (
             <DataTable
               columns={pokemonColumns}
@@ -132,7 +156,7 @@ const PokemonList = () => {
             onNext={handleNext}
             onGoToPage={goToPage}
             isLoading={isLoading}
-            hasQuery={hasQuery}
+            hasQuery={hasFilters}
           />
         </>
       )}
