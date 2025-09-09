@@ -10,7 +10,7 @@ import { useDebounce } from "./useDebounce";
  */
 export const useSearch = (
   defaultQuery: string = "",
-  debounceMs: number = 300
+  debounceMs: number = 500
 ) => {
   const [query, setQuery] = useState(defaultQuery);
   const router = useRouter();

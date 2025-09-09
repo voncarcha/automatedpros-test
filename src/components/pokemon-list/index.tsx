@@ -32,7 +32,7 @@ const PokemonList = () => {
     resetPagination,
   } = usePaginate(0, limit);
   const { query, debouncedQuery, setQuery, clearSearch, hasQuery } =
-    useSearch();
+    useSearch('', 500);
   const { selectedTypes, hasTypesSelected, clearTypes } = useTypeFilter();
   const { favorites, showOnlyFavorites, clearFavoritesFilter } = useFavorites();
 
@@ -99,9 +99,7 @@ const PokemonList = () => {
   };
 
   const handleClearAllFilters = () => {
-    clearTypes();
     clearSearch();
-    clearFavoritesFilter();
   };
 
   // Calculate total pages based on current results

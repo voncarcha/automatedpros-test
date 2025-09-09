@@ -9,7 +9,7 @@ import { useState, useEffect } from "react";
  */
 export const useDebounce = <T>(
   value: T,
-  delay: number = 300,
+  delay: number = 500,
   onSearchingChange?: (isSearching: boolean) => void
 ) => {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
