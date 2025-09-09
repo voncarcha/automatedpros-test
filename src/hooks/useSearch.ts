@@ -53,15 +53,10 @@ export const useSearch = (
     [updateUrlWithQuery]
   );
 
-  // Helper function to clear all URL parameters
-  const clearAllParams = useCallback(() => {
-    router.push("/", { scroll: false });
-  }, [router]);
-
   // Function to clear search
   const clearSearch = () => {
     setQuery("");
-    clearAllParams();
+    updateUrlWithQuery("");
   };
 
   return {

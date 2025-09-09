@@ -104,6 +104,10 @@ const PokemonList = () => {
     clearSearch();
   };
 
+  const handleClearSearch = () => {
+    clearSearch();
+  };
+
   // Calculate total pages based on current results
   const totalPages = Math.ceil(totalResults / limit);
 
