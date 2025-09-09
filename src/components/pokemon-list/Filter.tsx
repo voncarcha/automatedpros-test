@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { usePokemonTypes } from "@/hooks/usePokemon";
-import { useTypeFilter } from "@/hooks/useTypeFilter";
+import { useAppStore } from "@/stores/useAppStore";
 import { ChevronDown, X, Filter as FilterIcon } from "lucide-react";
 
 interface FilterProps {
@@ -14,20 +14,24 @@ interface FilterProps {
 const TypeFilter: React.FC<FilterProps> = ({ onFiltersChange }) => {
   const [isOpen, setIsOpen] = useState(false);
   const { data: pokemonTypes, isLoading: typesLoading } = usePokemonTypes();
-  const {
-    selectedTypes,
-    toggleType,
-    clearTypes,
-    hasTypesSelected,
-  } = useTypeFilter();
+  const selectedTypes = useAppStore((state) => state.selectedTypes);
+  const addSelectedType = useAppStore((state) => state.addSelectedType);
+  const removeSelectedType = useAppStore((state) => state.removeSelectedType);
+  const clearSelectedTypes = useAppStore((state) => state.clearSelectedTypes);
+  
+  const hasTypesSelected = selectedTypes.length > 0;
 
   const handleTypeToggle = (typeName: string) => {
-    toggleType(typeName);
+    if (selectedTypes.includes(typeName)) {
+      removeSelectedType(typeName);
+    } else {
+      addSelectedType(typeName);
+    }
     onFiltersChange?.();
   };
 
   const handleClearAll = () => {
-    clearTypes();
+    clearSelectedTypes();
     onFiltersChange?.();
     setIsOpen(false);
   };

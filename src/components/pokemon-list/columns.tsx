@@ -5,11 +5,12 @@ import Image from "next/image";
 import { Pokemon } from "@/lib/pokemon-api";
 import { Badge } from "../ui/badge";
 import { FavoriteButton } from "../ui/FavoriteButton";
-import { useFavorites } from "@/contexts/FavoritesContext";
+import { useFavoritesStore } from "@/stores/useFavoritesStore";
 
 // Component to handle favorites in the table row
 const FavoriteCell: React.FC<{ pokemon: Pokemon }> = ({ pokemon }) => {
-  const { isFavorite, toggleFavorite } = useFavorites();
+  const isFavorite = useFavoritesStore((state) => state.isFavorite);
+  const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
 
   return (
     <div className="flex justify-center">

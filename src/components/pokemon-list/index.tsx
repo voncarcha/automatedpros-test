@@ -1,13 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import {
-  usePokemonListWithDetails,
-  usePokemonSearchWithTypesAndFavorites,
-} from "@/hooks/usePokemon";
-import { usePaginate } from "@/hooks/usePaginate";
-import { useSearch } from "@/hooks/useSearch";
-import { useTypeFilter } from "@/hooks/useTypeFilter";
+import { usePokemonApp } from "@/hooks/usePokemonApp";
 import { useRouter } from "next/navigation";
 import { Pokemon } from "@/lib/pokemon-api";
 
@@ -18,82 +11,45 @@ import { DataTable } from "./DataTable";
 import { pokemonColumns } from "./columns";
 import Filter from "./Filter";
 import Favorites from "./Favorites";
-import { useFavorites } from "@/contexts/FavoritesContext";
 
 const PokemonList = () => {
-  const limit = 20;
   const router = useRouter();
   const {
+    // Data
+    pokemon,
+    totalCount,
+    isLoading,
+    isError,
+    error,
+    
+    // Search state
+    searchQuery,
+    hasSearchQuery,
+    
+    // Pagination state
     offset,
+    currentPage,
+    limit,
+    
+    // Filter state
+    selectedTypes,
+    showOnlyFavorites,
+    hasActiveFilters,
+    
+    // Actions
+    setSearchQuery,
+    clearSearch,
     nextPage,
     previousPage,
     goToPage,
-    currentPage,
-    resetPagination,
-  } = usePaginate(0, limit);
-  const { query, debouncedQuery, setQuery, clearSearch, hasQuery } = useSearch(
-    "",
-    500
-  );
-  const { selectedTypes, hasTypesSelected } = useTypeFilter();
-  const { favorites, showOnlyFavorites } = useFavorites();
-
-  // Reset pagination when search query, types, or favorites filter change
-  const prevDebouncedQuery = useRef(debouncedQuery);
-  const prevSelectedTypes = useRef(selectedTypes);
-  const prevShowOnlyFavorites = useRef(showOnlyFavorites);
-
-  useEffect(() => {
-    // Reset if search query, types, or favorites filter changed
-    if (
-      debouncedQuery !== prevDebouncedQuery.current ||
-      JSON.stringify(selectedTypes) !==
-        JSON.stringify(prevSelectedTypes.current) ||
-      showOnlyFavorites !== prevShowOnlyFavorites.current
-    ) {
-      resetPagination();
-      prevDebouncedQuery.current = debouncedQuery;
-      prevSelectedTypes.current = selectedTypes;
-      prevShowOnlyFavorites.current = showOnlyFavorites;
-    }
-  }, [debouncedQuery, selectedTypes, showOnlyFavorites, resetPagination]);
-
-  // Determine if we should use filtering (query, types, or favorites)
-  const hasFilters = hasQuery || hasTypesSelected || showOnlyFavorites;
-
-  const {
-    data: filteredData,
-    isLoading: filteredLoading,
-    error: filteredError,
-  } = usePokemonSearchWithTypesAndFavorites(
-    debouncedQuery,
-    selectedTypes,
-    favorites,
-    showOnlyFavorites,
-    offset,
-    limit
-  );
-
-  const {
-    data: regularData,
-    isLoading: regularLoading,
-    error: regularError,
-  } = usePokemonListWithDetails(offset, limit, { enabled: !hasFilters });
-
-  // Use filtered data when there are filters, otherwise use regular data
-  const pokemonData = hasFilters ? filteredData?.results : regularData?.results;
-  const totalResults = hasFilters
-    ? filteredData?.total || 0
-    : regularData?.total || 0;
-  const isLoading = hasFilters ? filteredLoading : regularLoading;
-  const error = hasFilters ? filteredError : regularError;
+  } = usePokemonApp();
 
   const handlePrevious = () => {
-    previousPage(limit);
+    previousPage();
   };
 
   const handleNext = () => {
-    nextPage(limit);
+    nextPage();
   };
 
   const handleRowClick = (pokemon: Pokemon) => {
@@ -104,14 +60,10 @@ const PokemonList = () => {
     clearSearch();
   };
 
-  const handleClearSearch = () => {
-    clearSearch();
-  };
-
   // Calculate total pages based on current results
-  const totalPages = Math.ceil(totalResults / limit);
+  const totalPages = Math.ceil(totalCount / limit);
 
-  if (error) {
+  if (isError && error) {
     return (
       <div className="p-8 text-center">
         <h2 className="text-xl font-semibold text-red-600 mb-2">
@@ -126,11 +78,11 @@ const PokemonList = () => {
     <section className="p-6">
       <div className="flex gap-2 flex-col-reverse md:flex-row">
         <Search
-          query={query}
-          onQueryChange={setQuery}
+          query={searchQuery}
+          onQueryChange={setSearchQuery}
           onClearSearch={clearSearch}
-          hasQuery={hasQuery}
-          totalResults={totalResults}
+          hasQuery={hasSearchQuery}
+          totalResults={totalCount}
         />
         <div className="flex gap-2">
           <Filter />
@@ -142,17 +94,17 @@ const PokemonList = () => {
         <div className="flex items-center justify-center p-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           <span className="ml-2 text-gray-600">
-            {hasFilters ? "Filtering Pokemon..." : "Loading Pokemon..."}
+            {hasActiveFilters ? "Filtering Pokemon..." : "Loading Pokemon..."}
           </span>
         </div>
       ) : (
         <>
           {/* Show empty state for filters with no results */}
-          {hasFilters && (!pokemonData || pokemonData.length === 0) ? (
+          {hasActiveFilters && (!pokemon || pokemon.length === 0) ? (
             <EmptyState
               query={
-                hasQuery
-                  ? query
+                hasSearchQuery
+                  ? searchQuery
                   : showOnlyFavorites
                   ? "favorites"
                   : `${selectedTypes.join(", ")} type${
@@ -164,7 +116,7 @@ const PokemonList = () => {
           ) : (
             <DataTable
               columns={pokemonColumns}
-              data={pokemonData || []}
+              data={pokemon || []}
               onRowClick={handleRowClick}
             />
           )}
@@ -172,15 +124,15 @@ const PokemonList = () => {
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
-            totalResults={totalResults}
+            totalResults={totalCount}
             offset={offset}
             itemsPerPage={limit}
-            currentItemsCount={pokemonData?.length || 0}
+            currentItemsCount={pokemon?.length || 0}
             onPrevious={handlePrevious}
             onNext={handleNext}
             onGoToPage={goToPage}
             isLoading={isLoading}
-            hasQuery={hasFilters}
+            hasQuery={hasActiveFilters}
           />
         </>
       )}

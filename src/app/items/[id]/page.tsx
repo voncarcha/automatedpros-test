@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FavoriteButton } from "@/components/ui/FavoriteButton";
 import { ArrowLeft } from "lucide-react";
-import { useFavorites } from "@/contexts/FavoritesContext";
+import { useFavoritesStore } from "@/stores/useFavoritesStore";
 
 export default function PokemonDetailPage() {
   const params = useParams();
@@ -15,7 +15,8 @@ export default function PokemonDetailPage() {
   const id = params.id as string;
   
   const { data: pokemon, isLoading, error } = usePokemonDetail(id);
-  const { isFavorite, toggleFavorite } = useFavorites();
+  const isFavorite = useFavoritesStore((state) => state.isFavorite);
+  const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
 
   if (isLoading) {
     return (

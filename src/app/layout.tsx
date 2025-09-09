@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import QueryProvider from "./providers/QueryProvider";
-import { FavoritesProvider } from "@/contexts/FavoritesContext";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -30,7 +29,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <QueryProvider>
-          <FavoritesProvider>{children}</FavoritesProvider>
+          {children}
         </QueryProvider>
       </body>
     </html>
