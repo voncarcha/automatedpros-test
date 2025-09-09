@@ -7,11 +7,10 @@ import { Badge } from "../ui/badge";
 import { FavoriteButton } from "../ui/FavoriteButton";
 import { useFavorites } from "@/contexts/FavoritesContext";
 
-
 // Component to handle favorites in the table row
 const FavoriteCell: React.FC<{ pokemon: Pokemon }> = ({ pokemon }) => {
   const { isFavorite, toggleFavorite } = useFavorites();
-  
+
   return (
     <div className="flex justify-center">
       <FavoriteButton
@@ -28,12 +27,14 @@ export const pokemonColumns: ColumnDef<Pokemon>[] = [
   {
     accessorKey: "favorite",
     header: "",
+    enableSorting: false,
     cell: ({ row }) => <FavoriteCell pokemon={row.original} />,
     size: 50,
   },
   {
     accessorKey: "id",
     header: "ID",
+    enableSorting: true,
     cell: ({ row }) => (
       <div className="font-mono text-sm">#{row.getValue("id")}</div>
     ),
@@ -41,10 +42,13 @@ export const pokemonColumns: ColumnDef<Pokemon>[] = [
   {
     accessorKey: "sprites",
     header: "Image",
+    enableSorting: false,
     cell: ({ row }) => {
       const sprites = row.getValue("sprites") as Pokemon["sprites"];
-      const imageUrl = sprites?.other?.["official-artwork"]?.front_default || sprites?.front_default;
-      
+      const imageUrl =
+        sprites?.other?.["official-artwork"]?.front_default ||
+        sprites?.front_default;
+
       return (
         <div className="flex justify-center w-[60px]">
           {imageUrl ? (
@@ -67,18 +71,23 @@ export const pokemonColumns: ColumnDef<Pokemon>[] = [
   {
     accessorKey: "name",
     header: "Name",
+    enableSorting: true,
+    sortingFn: (rowA, rowB, columnId) => {
+      const nameA = rowA.getValue(columnId) as string;
+      const nameB = rowB.getValue(columnId) as string;
+      return nameA.localeCompare(nameB);
+    },
     cell: ({ row }) => (
-      <div className="font-medium capitalize">
-        {row.getValue("name")}
-      </div>
+      <div className="font-medium capitalize">{row.getValue("name")}</div>
     ),
   },
   {
     accessorKey: "types",
     header: "Types",
+    enableSorting: true,
     cell: ({ row }) => {
       const types = row.getValue("types") as Pokemon["types"];
-      
+
       return (
         <div className="flex gap-1 flex-wrap">
           {types?.map((type, index) => (
@@ -93,6 +102,7 @@ export const pokemonColumns: ColumnDef<Pokemon>[] = [
   {
     accessorKey: "height",
     header: "Height",
+    enableSorting: true,
     cell: ({ row }) => {
       const height = row.getValue("height") as number;
       return height ? `${height / 10} m` : "-";
@@ -101,6 +111,7 @@ export const pokemonColumns: ColumnDef<Pokemon>[] = [
   {
     accessorKey: "weight",
     header: "Weight",
+    enableSorting: true,
     cell: ({ row }) => {
       const weight = row.getValue("weight") as number;
       return weight ? `${weight / 10} kg` : "-";
