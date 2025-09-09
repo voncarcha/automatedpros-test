@@ -19,7 +19,7 @@ export const usePaginate = (defaultOffset: number = 0, limit: number = 20) => {
 
   // Helper function to update URL with new offset
   const updateUrlWithOffset = useCallback(
-    (newOffset: number, preserveSearch: boolean = true) => {
+    (newOffset: number) => {
       const params = new URLSearchParams(searchParams.toString());
       params.set("offset", newOffset.toString());
       router.push(`?${params.toString()}`, { scroll: false });

@@ -35,8 +35,8 @@ const PokemonList = () => {
     "",
     500
   );
-  const { selectedTypes, hasTypesSelected, clearTypes } = useTypeFilter();
-  const { favorites, showOnlyFavorites, clearFavoritesFilter } = useFavorites();
+  const { selectedTypes, hasTypesSelected } = useTypeFilter();
+  const { favorites, showOnlyFavorites } = useFavorites();
 
   // Reset pagination when search query, types, or favorites filter change
   const prevDebouncedQuery = useRef(debouncedQuery);
