@@ -5,7 +5,9 @@ import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { FavoriteButton } from "@/components/ui/FavoriteButton";
 import { ArrowLeft } from "lucide-react";
+import { useFavorites } from "@/contexts/FavoritesContext";
 
 export default function PokemonDetailPage() {
   const params = useParams();
@@ -13,6 +15,7 @@ export default function PokemonDetailPage() {
   const id = params.id as string;
   
   const { data: pokemon, isLoading, error } = usePokemonDetail(id);
+  const { isFavorite, toggleFavorite } = useFavorites();
 
   if (isLoading) {
     return (
@@ -78,7 +81,14 @@ export default function PokemonDetailPage() {
                 <p className="text-blue-100 text-lg">#{pokemon.id.toString().padStart(3, '0')}</p>
               </div>
               <div className="text-right">
-                <div className="flex gap-2 flex-wrap justify-end">
+                <div className="flex gap-2 flex-wrap justify-end items-center">
+                  <FavoriteButton
+                    pokemonId={pokemon.id}
+                    isFavorite={isFavorite(pokemon.id)}
+                    onToggle={toggleFavorite}
+                    variant="text"
+                    className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                  />
                   {pokemon.types?.map((type, index) => (
                     <Badge key={index} variant="secondary" className="bg-white/20 text-white border-white/30">
                       {type.type.name}

@@ -1,21 +1,24 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { DataTable } from "./DataTable";
-import { pokemonColumns } from "./columns";
 import {
   usePokemonListWithDetails,
-  usePokemonSearchWithTypes,
+  usePokemonSearchWithTypesAndFavorites,
 } from "@/hooks/usePokemon";
 import { usePaginate } from "@/hooks/usePaginate";
 import { useSearch } from "@/hooks/useSearch";
 import { useTypeFilter } from "@/hooks/useTypeFilter";
 import { useRouter } from "next/navigation";
 import { Pokemon } from "@/lib/pokemon-api";
+
 import { Search } from "./Search";
 import { EmptyState } from "./EmptyState";
 import { Pagination } from "./Pagination";
+import { DataTable } from "./DataTable";
+import { pokemonColumns } from "./columns";
 import Filter from "./Filter";
+import Favorites from "./Favorites";
+import { useFavorites } from "@/contexts/FavoritesContext";
 
 const PokemonList = () => {
   const limit = 20;
@@ -31,32 +34,43 @@ const PokemonList = () => {
   const { query, debouncedQuery, setQuery, clearSearch, hasQuery } =
     useSearch();
   const { selectedTypes, hasTypesSelected, clearTypes } = useTypeFilter();
+  const { favorites, showOnlyFavorites, clearFavoritesFilter } = useFavorites();
 
-  // Reset pagination when search query or types change
+  // Reset pagination when search query, types, or favorites filter change
   const prevDebouncedQuery = useRef(debouncedQuery);
   const prevSelectedTypes = useRef(selectedTypes);
+  const prevShowOnlyFavorites = useRef(showOnlyFavorites);
 
   useEffect(() => {
-    // Reset if search query or types changed
+    // Reset if search query, types, or favorites filter changed
     if (
       debouncedQuery !== prevDebouncedQuery.current ||
       JSON.stringify(selectedTypes) !==
-        JSON.stringify(prevSelectedTypes.current)
+        JSON.stringify(prevSelectedTypes.current) ||
+      showOnlyFavorites !== prevShowOnlyFavorites.current
     ) {
       resetPagination();
       prevDebouncedQuery.current = debouncedQuery;
       prevSelectedTypes.current = selectedTypes;
+      prevShowOnlyFavorites.current = showOnlyFavorites;
     }
-  }, [debouncedQuery, selectedTypes, resetPagination]);
+  }, [debouncedQuery, selectedTypes, showOnlyFavorites, resetPagination]);
 
-  // Determine if we should use filtering (either query or types selected)
-  const hasFilters = hasQuery || hasTypesSelected;
+  // Determine if we should use filtering (query, types, or favorites)
+  const hasFilters = hasQuery || hasTypesSelected || showOnlyFavorites;
 
   const {
     data: filteredData,
     isLoading: filteredLoading,
     error: filteredError,
-  } = usePokemonSearchWithTypes(debouncedQuery, selectedTypes, offset, limit);
+  } = usePokemonSearchWithTypesAndFavorites(
+    debouncedQuery,
+    selectedTypes,
+    favorites,
+    showOnlyFavorites,
+    offset,
+    limit
+  );
 
   const {
     data: regularData,
@@ -87,6 +101,7 @@ const PokemonList = () => {
   const handleClearAllFilters = () => {
     clearTypes();
     clearSearch();
+    clearFavoritesFilter();
   };
 
   // Calculate total pages based on current results
@@ -114,6 +129,7 @@ const PokemonList = () => {
           totalResults={totalResults}
         />
         <Filter />
+        <Favorites />
       </div>
 
       {isLoading ? (
@@ -131,6 +147,8 @@ const PokemonList = () => {
               query={
                 hasQuery
                   ? query
+                  : showOnlyFavorites
+                  ? "favorites"
                   : `${selectedTypes.join(", ")} type${
                       selectedTypes.length > 1 ? "s" : ""
                     }`

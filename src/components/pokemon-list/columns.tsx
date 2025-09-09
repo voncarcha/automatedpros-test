@@ -4,9 +4,33 @@ import { ColumnDef } from "@tanstack/react-table";
 import Image from "next/image";
 import { Pokemon } from "@/lib/pokemon-api";
 import { Badge } from "../ui/badge";
-import { useRouter } from "next/navigation";
+import { FavoriteButton } from "../ui/FavoriteButton";
+import { useFavorites } from "@/contexts/FavoritesContext";
+
+
+// Component to handle favorites in the table row
+const FavoriteCell: React.FC<{ pokemon: Pokemon }> = ({ pokemon }) => {
+  const { isFavorite, toggleFavorite } = useFavorites();
+  
+  return (
+    <div className="flex justify-center">
+      <FavoriteButton
+        pokemonId={pokemon.id}
+        isFavorite={isFavorite(pokemon.id)}
+        onToggle={toggleFavorite}
+        size="sm"
+      />
+    </div>
+  );
+};
 
 export const pokemonColumns: ColumnDef<Pokemon>[] = [
+  {
+    accessorKey: "favorite",
+    header: "",
+    cell: ({ row }) => <FavoriteCell pokemon={row.original} />,
+    size: 50,
+  },
   {
     accessorKey: "id",
     header: "ID",

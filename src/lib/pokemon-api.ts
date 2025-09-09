@@ -168,22 +168,41 @@ export const fetchPokemonByType = async (typeName: string): Promise<string[]> =>
   return data.pokemon.map(p => p.pokemon.name);
 };
 
-// Search Pokemon with client-side filtering by name and types
-export const searchPokemonByNameAndTypes = async (
+// Search Pokemon with client-side filtering by name, types, and favorites
+export const searchPokemonByNameTypesAndFavorites = async (
   query: string = "",
   selectedTypes: string[] = [],
+  favoriteIds: number[] = [],
+  showOnlyFavorites: boolean = false,
   offset: number = 0,
   limit: number = 20
 ): Promise<{results: Pokemon[], total: number}> => {
-  // If no query and no types selected, return regular paginated list
-  if (!query.trim() && selectedTypes.length === 0) {
+  // If showing only favorites and no favorites exist, return empty
+  if (showOnlyFavorites && favoriteIds.length === 0) {
+    return { results: [], total: 0 };
+  }
+  
+  // If no filters at all, return regular paginated list
+  if (!query.trim() && selectedTypes.length === 0 && !showOnlyFavorites) {
     const data = await fetchPokemonListWithDetails(offset, limit);
     return data;
   }
   
   let filteredPokemonNames: string[] = [];
   
-  if (selectedTypes.length > 0) {
+  if (showOnlyFavorites) {
+    // Start with favorite Pokemon names
+    const favoritePromises = favoriteIds.map(async (id) => {
+      try {
+        const detail = await fetchPokemonDetail(id);
+        return detail.name;
+      } catch {
+        return null; // Handle case where favorite doesn't exist
+      }
+    });
+    const favoriteNames = await Promise.all(favoritePromises);
+    filteredPokemonNames = favoriteNames.filter(Boolean) as string[];
+  } else if (selectedTypes.length > 0) {
     // Fetch Pokemon for each selected type
     const typePromises = selectedTypes.map(type => fetchPokemonByType(type));
     const typePokemonArrays = await Promise.all(typePromises);
@@ -198,9 +217,29 @@ export const searchPokemonByNameAndTypes = async (
       );
     }
   } else {
-    // If no types selected, get all Pokemon names
+    // If no types selected and not showing favorites, get all Pokemon names
     const allPokemon = await fetchAllPokemonNames();
     filteredPokemonNames = allPokemon.map(p => p.name);
+  }
+  
+  // Apply type filter to favorites if both are selected
+  if (showOnlyFavorites && selectedTypes.length > 0) {
+    const typePromises = selectedTypes.map(type => fetchPokemonByType(type));
+    const typePokemonArrays = await Promise.all(typePromises);
+    
+    let typePokemonNames: string[] = [];
+    if (typePokemonArrays.length === 1) {
+      typePokemonNames = typePokemonArrays[0];
+    } else {
+      typePokemonNames = typePokemonArrays.reduce((acc, curr) => 
+        acc.filter(pokemon => curr.includes(pokemon))
+      );
+    }
+    
+    // Keep only favorites that also match the type filter
+    filteredPokemonNames = filteredPokemonNames.filter(name => 
+      typePokemonNames.includes(name)
+    );
   }
   
   // Filter by name if query provided
@@ -233,6 +272,16 @@ export const searchPokemonByNameAndTypes = async (
     results,
     total: filteredPokemonNames.length
   };
+};
+
+// Search Pokemon with client-side filtering by name and types (backward compatibility)
+export const searchPokemonByNameAndTypes = async (
+  query: string = "",
+  selectedTypes: string[] = [],
+  offset: number = 0,
+  limit: number = 20
+): Promise<{results: Pokemon[], total: number}> => {
+  return searchPokemonByNameTypesAndFavorites(query, selectedTypes, [], false, offset, limit);
 };
 
 // Keep the old function for backward compatibility

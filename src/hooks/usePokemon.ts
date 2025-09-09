@@ -5,6 +5,7 @@ import {
   fetchPokemonListWithDetails,
   searchPokemonByName,
   searchPokemonByNameAndTypes,
+  searchPokemonByNameTypesAndFavorites,
   fetchPokemonTypes,
 } from "@/lib/pokemon-api";
 
@@ -83,6 +84,23 @@ export const usePokemonSearchWithTypes = (
     queryKey: ["pokemon-search-types", query, selectedTypes, offset, limit],
     queryFn: () => searchPokemonByNameAndTypes(query, selectedTypes, offset, limit),
     enabled: !!query.trim() || selectedTypes.length > 0, // Enabled when there's a query or types selected
+    staleTime: STALE_TIME,
+  });
+};
+
+// Hook for searching Pokemon with name, type, and favorites filtering
+export const usePokemonSearchWithTypesAndFavorites = (
+  query: string = "",
+  selectedTypes: string[] = [],
+  favoriteIds: number[] = [],
+  showOnlyFavorites: boolean = false,
+  offset: number = 0,
+  limit: number = 20
+) => {
+  return useQuery({
+    queryKey: ["pokemon-search-full", query, selectedTypes, favoriteIds, showOnlyFavorites, offset, limit],
+    queryFn: () => searchPokemonByNameTypesAndFavorites(query, selectedTypes, favoriteIds, showOnlyFavorites, offset, limit),
+    enabled: !!query.trim() || selectedTypes.length > 0 || showOnlyFavorites, // Enabled when there's any filter
     staleTime: STALE_TIME,
   });
 };
