@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 const FAVORITES_STORAGE_KEY = "pokemon-favorites";
@@ -22,7 +22,7 @@ interface FavoritesContextType {
 
 const FavoritesContext = createContext<FavoritesContextType | undefined>(undefined);
 
-export function FavoritesProvider({ children }: { children: React.ReactNode }) {
+function FavoritesProviderInner({ children }: { children: React.ReactNode }) {
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
@@ -183,6 +183,16 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     <FavoritesContext.Provider value={value}>
       {children}
     </FavoritesContext.Provider>
+  );
+}
+
+export function FavoritesProvider({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <FavoritesProviderInner>
+        {children}
+      </FavoritesProviderInner>
+    </Suspense>
   );
 }
 
