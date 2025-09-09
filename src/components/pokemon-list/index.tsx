@@ -31,8 +31,10 @@ const PokemonList = () => {
     currentPage,
     resetPagination,
   } = usePaginate(0, limit);
-  const { query, debouncedQuery, setQuery, clearSearch, hasQuery } =
-    useSearch('', 500);
+  const { query, debouncedQuery, setQuery, clearSearch, hasQuery } = useSearch(
+    "",
+    500
+  );
   const { selectedTypes, hasTypesSelected, clearTypes } = useTypeFilter();
   const { favorites, showOnlyFavorites, clearFavoritesFilter } = useFavorites();
 
@@ -118,7 +120,7 @@ const PokemonList = () => {
 
   return (
     <section className="p-6">
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex gap-2 flex-col-reverse md:flex-row">
         <Search
           query={query}
           onQueryChange={setQuery}
@@ -126,8 +128,10 @@ const PokemonList = () => {
           hasQuery={hasQuery}
           totalResults={totalResults}
         />
-        <Filter />
-        <Favorites />
+        <div className="flex gap-2">
+          <Filter />
+          <Favorites />
+        </div>
       </div>
 
       {isLoading ? (

@@ -60,7 +60,7 @@ export const Pagination = ({
   }
 
   return (
-    <div className={`flex items-center justify-between mt-6 ${className}`}>
+    <div className={`flex items-center justify-between mt-6 ${className} md:flex-row flex-col-reverse gap-3`}>
       <div className="text-sm text-gray-600">
         Showing {offset + 1} to {offset + currentItemsCount} of {totalResults.toLocaleString()} Pokemon
         {hasQuery && <span className="ml-2">(filtered)</span>}
